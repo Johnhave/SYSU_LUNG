@@ -5,6 +5,7 @@ import os.path as osp
 
 import numpy as np
 import pydicom
+from pydicom.multival import MultiValue
 import PIL.Image
 
 from labelme._version import __version__
@@ -47,10 +48,15 @@ class LabelFile(object):
         ww = 1200
         # question: 是否所有窗位窗宽都是multivalue?
         try:
-            wl = dcm_object[0x28, 0x1050].value.pop()
-            ww = dcm_object[0x28, 0x1051].value.pop()
+            wl = dcm_object[0x28, 0x1050].value
+            if isinstance(wl, MultiValue):
+                wl = wl.pop()
+            ww = dcm_object[0x28, 0x1051].value
+            if isinstance(ww, MultiValue):
+                ww = ww.pop()
         except:
             pass
+        print(wl, ww)
         dicom_data = [wl, ww, dcm_array]
         dcm_array = np.minimum(dcm_array, wl + ww / 2)
         dcm_array = np.maximum(dcm_array, wl - ww / 2)
