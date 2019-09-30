@@ -1,3 +1,11 @@
+'''
+实现Shape数据类，对应于标注，其内容包括
+属性：
+
+方法：
+
+'''
+
 import copy
 import math
 

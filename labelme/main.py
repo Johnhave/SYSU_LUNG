@@ -16,11 +16,13 @@ from labelme.utils import newIcon
 
 
 def main():
+    # 定义解析器
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--version', '-V', action='store_true', help='show version'
     )
     parser.add_argument(
+
         '--reset-config', action='store_true', help='reset qt config'
     )
     parser.add_argument(
@@ -103,6 +105,7 @@ def main():
         help='epsilon to find nearest vertex on canvas',
         default=argparse.SUPPRESS,
     )
+    # 进行解析，获得解析结果
     args = parser.parse_args()
 
     if args.version:
@@ -111,6 +114,7 @@ def main():
 
     logger.setLevel(getattr(logging, args.logger_level.upper()))
 
+    # 对部分arg进行处理
     if hasattr(args, 'flags'):
         if os.path.isfile(args.flags):
             with codecs.open(args.flags, 'r', encoding='utf-8') as f:
@@ -132,6 +136,7 @@ def main():
         else:
             args.label_flags = yaml.load(args.label_flags)
 
+    # 将arg字典配置到config
     config_from_args = args.__dict__
     config_from_args.pop('version')
     reset_config = config_from_args.pop('reset_config')

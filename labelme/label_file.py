@@ -3,6 +3,8 @@ import io
 import json
 import os.path as osp
 
+import numpy as np
+import pydicom
 import PIL.Image
 
 from labelme._version import __version__
@@ -28,16 +30,52 @@ class LabelFile(object):
             self.load(filename)
         self.filename = filename
 
+    # MYCODE: 增加对dicom文件的读取
+
+    @staticmethod
+    def dcm2pil_image(filename):
+        dcm_object = pydicom.dcmread(filename)
+        dcm_array = dcm_object.pixel_array
+        try:
+            intercept = dcm_object[0x28, 0x1052].value
+            slope = dcm_object[0x28, 0x1053].value
+            dcm_array = (dcm_array * slope) + intercept
+        except:
+            pass
+        # 肺窗
+        wl = -600
+        ww = 1200
+        # question: 是否所有窗位窗宽都是multivalue?
+        try:
+            wl = dcm_object[0x28, 0x1050].value.pop()
+            ww = dcm_object[0x28, 0x1051].value.pop()
+        except:
+            pass
+        dicom_data = [wl, ww, dcm_array]
+        dcm_array = np.minimum(dcm_array, wl + ww / 2)
+        dcm_array = np.maximum(dcm_array, wl - ww / 2)
+        dcm_array = np.round(((dcm_array - (wl - ww / 2))  * 255 / ww))
+        dcm_image = PIL.Image.fromarray(dcm_array)
+        dcm_image = dcm_image.convert('L')
+        return dcm_image, dicom_data
+
     @staticmethod
     def load_image_file(filename):
-        try:
-            image_pil = PIL.Image.open(filename)
-        except IOError:
-            logger.error('Failed opening image file: {}'.format(filename))
-            return
 
-        # apply orientation to image according to exif
-        image_pil = utils.apply_exif_orientation(image_pil)
+        raw_data = None
+
+        ext = osp.splitext(filename)[1].lower()
+        if ext == '.dcm':
+            image_pil, raw_data = LabelFile.dcm2pil_image(filename)
+        else:
+            try:
+                image_pil = PIL.Image.open(filename)
+            except IOError:
+                logger.error('Failed opening image file: {}'.format(filename))
+                return
+
+            # apply orientation to image according to exif
+            image_pil = utils.apply_exif_orientation(image_pil)
 
         with io.BytesIO() as f:
             ext = osp.splitext(filename)[1].lower()
@@ -49,7 +87,7 @@ class LabelFile(object):
                 format = 'PNG'
             image_pil.save(f, format=format)
             f.seek(0)
-            return f.read()
+            return f.read(), raw_data
 
     def load(self, filename):
         keys = [
@@ -72,7 +110,7 @@ class LabelFile(object):
             else:
                 # relative path from label file to relative path from cwd
                 imagePath = osp.join(osp.dirname(filename), data['imagePath'])
-                imageData = self.load_image_file(imagePath)
+                imageData, _ = self.load_image_file(imagePath)
             flags = data.get('flags') or {}
             imagePath = data['imagePath']
             self._check_image_height_and_width(

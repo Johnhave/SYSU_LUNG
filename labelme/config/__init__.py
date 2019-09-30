@@ -64,15 +64,18 @@ def get_config(config_from_args=None, config_file=None):
 
     # 1. default config
     config = get_default_config()
+    logger.info('从默认配置文件配置')
 
     # 2. config from yaml file
     if config_file is not None and osp.exists(config_file):
+        logger.info('从指定配置文件配置')
         with open(config_file) as f:
             user_config = yaml.safe_load(f) or {}
         update_dict(config, user_config, validate_item=validate_config_item)
 
     # 3. command line argument
     if config_from_args is not None:
+        logger.info('从命令行指令中配置')
         update_dict(config, config_from_args,
                     validate_item=validate_config_item)
 

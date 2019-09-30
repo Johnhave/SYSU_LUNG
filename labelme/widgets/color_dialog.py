@@ -28,3 +28,15 @@ class ColorDialog(QtWidgets.QColorDialog):
         if self.bb.buttonRole(button) & \
                 QtWidgets.QDialogButtonBox.ResetRole and self.default:
             self.setCurrentColor(self.default)
+
+if __name__ == '__main__':
+
+    import sys
+
+    app = QtWidgets.QApplication(sys.argv)
+    win = QtWidgets.QMainWindow()
+    color_dialog = ColorDialog()
+    win.setCentralWidget(color_dialog)
+    win.show()
+    win.raise_()
+    sys.exit(app.exec_())

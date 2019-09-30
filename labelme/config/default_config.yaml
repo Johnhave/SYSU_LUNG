@@ -1,4 +1,4 @@
-auto_save: false
+auto_save: true
 display_label_popup: true
 instance_label_auto_increment: true
 store_data: true
@@ -12,7 +12,7 @@ file_search: null
 sort_labels: true
 validate_label: null
 
-# main
+# default view settings of subwidgets
 flag_dock:
   show: true
   closable: true
